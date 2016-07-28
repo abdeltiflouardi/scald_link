@@ -1,0 +1,6 @@
+name = Scald Link
+description = Allows the creation and edition of link and embedding.
+package = Scald
+core = 7.x
+dependencies[] = scald
+stylesheets[all][] = scald_link.css

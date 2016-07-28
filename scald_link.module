@@ -1,0 +1,96 @@
+<?php
+
+/**
+ * @file
+ * Introduces a text provider for the scald module.
+ */
+
+/*******************************************************************************
+ * SCALD HOOK IMPLEMENTATIONS
+ ******************************************************************************/
+
+/**
+ * Implements hook_scald_atom_providers.
+ */
+function scald_link_scald_atom_providers() {
+  return array(
+    'link' => 'Link atom'
+  );
+}
+
+/**
+ * Implements hook_scald_add_form.
+ */
+function scald_link_scald_add_form(&$form, &$form_state) {
+  $form['linktitle'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#default_value' => '',
+  );
+}
+
+/**
+ * Implements hook_scald_add_form_fill.
+ */
+function scald_link_scald_add_form_fill(&$atom, $form, $form_state) {
+  $title = $form_state['values']['linktitle'];
+  $atom->title = $title;
+}
+
+/**
+ * Implements hook_scald_fetch().
+ */
+function scald_link_scald_fetch($atom, $type) {
+  if ($type == 'atom') {
+    $file_items = field_get_items('scald_atom', $atom, 'scald_thumbnail');
+    if (!empty($file_items)) {
+      $file_item = current($file_items);
+      if (file_exists($file_item['uri'])) {
+        $atom->file_source = $atom->thumbnail_source = $file_item['uri'];
+      }
+    }
+    else {
+      $atom->thumbnail_source = drupal_get_path('module', 'scald_link') . '/icons/link-default.png';
+    }
+  }
+}
+
+/**
+ * Implements hook_scald_prerender().
+ */
+function scald_link_scald_prerender($atom, $context, $options, $mode) {
+
+  if ($mode == 'atom') {
+    if ($context === 'sdl_library_item') {
+      $scald_thumbnail = field_get_items('scald_atom', $atom, 'scald_thumbnail');
+      if (empty($scald_thumbnail)) {
+        $atom->rendered->thumbnail_transcoded_url = file_create_url($atom->thumbnail_source);
+      }
+    }
+    else {
+      $lang = field_language('scald_atom', $atom, 'scald_link');
+      $atom->rendered->player = theme('scald_link_render',
+        array(
+          'title' => $atom->title,
+          'content' => $atom->scald_link[$lang][0]['value'],
+        )
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_theme.
+ */
+function scald_link_theme() {
+  return array(
+    'scald_link_render' => array(
+      'variables' => array(
+        'title' => NULL,
+        'content' => NULL
+      ),
+      'template' => 'scald_link_render'
+    ),
+  );
+
+}
